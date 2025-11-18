@@ -11,6 +11,7 @@
 					<xs:documentation>Version of gpcML used</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
+			<xs:attribute name="id"/>
 		</xs:complexType>
 	</xs:element>
 </xs:schema>
