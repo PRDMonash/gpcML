@@ -13,6 +13,9 @@
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="id" type="xs:string"/>
+				<annotation>
+					<xs:documentation>Unique identifier for the gpcML document</xs:documentation>
+				</annotation>
 		</xs:complexType>
 	</xs:element>
 </xs:schema>
