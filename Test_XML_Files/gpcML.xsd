@@ -7,6 +7,7 @@
 			<xs:documentation>Root element of the XSD</xs:documentation>
 		</xs:annotation>
 		<xs:complexType>
+			<xs:sequence/>
 			<xs:attribute name="Version" type="xs:string" use="required">
 				<xs:annotation>
 					<xs:documentation>Version of gpcML used</xs:documentation>
@@ -15,4 +16,11 @@
 			<xs:attribute name="id" type="xs:string"/>
 		</xs:complexType>
 	</xs:element>
+	<xs:complexType name="gpcMLType">
+		<xs:annotation>
+			<xs:documentation>
+			This is the data type definition which defines the allowed elements/attributes inside of the nmrML xsd
+			</xs:documentation>
+		</xs:annotation>
+	</xs:complexType>
 </xs:schema>
