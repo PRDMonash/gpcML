@@ -15,6 +15,9 @@
 		</xs:annotation>
 		<xs:sequence>
 			<xs:element name="ContactList">
+				<xs:annotation>
+					<xs:documentation>list contatining all contacts related to the data file</xs:documentation>
+				</xs:annotation>
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="ContactListType">
@@ -25,6 +28,8 @@
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
+			<xs:element name="Metadata" type="MetadataType"/>
+			<xs:element name="InstrumentList" type="InstrumentListType"/>
 		</xs:sequence>
 		<xs:attribute name="Version" type="xs:string" use="required">
 			<xs:annotation>
@@ -62,6 +67,9 @@
 		<xs:annotation>
 			<xs:documentation>A complexType to contain all necessary instruments used to produce the experimental data</xs:documentation>
 		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Instrument" type="InstrumentInfoType" maxOccurs="unbounded"/>
+		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="InstrumentInfoType">
 		<xs:annotation>
@@ -77,4 +85,13 @@
 		</xs:annotation>
 	</xs:complexType>
 	<xs:complexType name="CalibrationType"/>
+	<xs:complexType name="MetadataType">
+		<xs:attribute name="date" type="xs:date" use="required"/>
+		<xs:attribute name="MethodName" type="xs:string" use="optional"/>
+		<xs:attribute name="CalibrationName" type="xs:string" use="optional"/>
+		<xs:attribute name="Operator" type="xs:string" use="optional"/>
+		<xs:attribute name="InstrumentName" type="xs:string" use="optional"/>
+		<xs:attribute name="RunTime" type="xs:time" use="required"/>
+		<xs:attribute name="lastServiceDate" type="xs:date" use="optional"/>
+	</xs:complexType>
 </xs:schema>
