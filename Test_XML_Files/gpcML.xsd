@@ -42,7 +42,11 @@
 	</xs:complexType>
 	<xs:complexType name="SampleType"/>
 	<xs:complexType name="EluGramType"/>
-	<xs:complexType name="MetadataListType"/>
+	<xs:complexType name="MetadataListType">
+		<xs:annotation>
+			<xs:documentation>contains a sequence of metadata associated</xs:documentation>
+		</xs:annotation>
+	</xs:complexType>
 	<xs:complexType name="ContactType">
 		<xs:annotation>
 			<xs:documentation>contact information to link data to a laborotory/analyst</xs:documentation>
@@ -67,4 +71,10 @@
 		<xs:attribute name="SerialNumber" type="xs:int" use="required"/>
 		<xs:attribute name="Manufacturer" type="xs:string" use="required"/>
 	</xs:complexType>
+	<xs:complexType name="RuntimeDataType">
+		<xs:annotation>
+			<xs:documentation>Contains a list of: the elugram data in a binary heap, List of intergration volumes (if multiple intergrations exist), system peak and internal standard peak volumes</xs:documentation>
+		</xs:annotation>
+	</xs:complexType>
+	<xs:complexType name="CalibrationType"/>
 </xs:schema>
