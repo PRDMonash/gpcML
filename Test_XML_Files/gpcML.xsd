@@ -42,8 +42,11 @@
 	</xs:complexType>
 	<xs:complexType name="SampleType"/>
 	<xs:complexType name="EluGramType"/>
-	<xs:complexType name="MetadataType"/>
+	<xs:complexType name="MetadataListType"/>
 	<xs:complexType name="ContactType">
+		<xs:annotation>
+			<xs:documentation>contact information to link data to a laborotory/analyst</xs:documentation>
+		</xs:annotation>
 		<xs:attribute name="FirstName" type="xs:string" use="required"/>
 		<xs:attribute name="MiddleName" type="xs:string" use="optional"/>
 		<xs:attribute name="LastName" type="xs:string" use="required"/>
@@ -51,4 +54,17 @@
 		<xs:attribute name="Institution" type="xs:string" use="optional"/>
 	</xs:complexType>
 	<xs:complexType name="ContactListType"/>
+	<xs:complexType name="InstrumentListType">
+		<xs:annotation>
+			<xs:documentation>A complexType to contain all necessary instruments used to produce the experimental data</xs:documentation>
+		</xs:annotation>
+	</xs:complexType>
+	<xs:complexType name="InstrumentInfoType">
+		<xs:annotation>
+			<xs:documentation>Specific information relating to the equipment to allow easy lookup of the parts</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="Name" type="xs:string" use="optional"/>
+		<xs:attribute name="SerialNumber" type="xs:int" use="required"/>
+		<xs:attribute name="Manufacturer" type="xs:string" use="required"/>
+	</xs:complexType>
 </xs:schema>
