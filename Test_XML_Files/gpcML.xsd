@@ -14,22 +14,10 @@
 			</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="ContactList">
-				<xs:annotation>
-					<xs:documentation>list contatining all contacts related to the data file</xs:documentation>
-				</xs:annotation>
-				<xs:complexType>
-					<xs:complexContent>
-						<xs:extension base="ContactListType">
-							<xs:sequence>
-								<xs:element name="Contact" type="ContactType" maxOccurs="unbounded"/>
-							</xs:sequence>
-						</xs:extension>
-					</xs:complexContent>
-				</xs:complexType>
-			</xs:element>
+			<xs:element name="ContactList" type="ContactListType"/>
 			<xs:element name="Metadata" type="MetadataType"/>
-			<xs:element name="InstrumentList" type="InstrumentListType"/>
+			<xs:element name="InstrumentInfoList" type="InstrumentListType" minOccurs="0"/>
+			<xs:element name="RunTimeData" type="RuntimeDataType"/>
 		</xs:sequence>
 		<xs:attribute name="Version" type="xs:string" use="required">
 			<xs:annotation>
@@ -62,14 +50,22 @@
 		<xs:attribute name="E-mail" type="xs:string" use="required"/>
 		<xs:attribute name="Institution" type="xs:string" use="optional"/>
 	</xs:complexType>
-	<xs:complexType name="ContactListType"/>
+	<xs:complexType name="ContactListType">
+		<xs:sequence>
+			<xs:element name="Contact" type="ContactType" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
 	<xs:complexType name="InstrumentListType">
 		<xs:annotation>
 			<xs:documentation>A complexType to contain all necessary instruments used to produce the experimental data</xs:documentation>
 		</xs:annotation>
-		<xs:sequence>
-			<xs:element name="Instrument" type="InstrumentInfoType" maxOccurs="unbounded"/>
-		</xs:sequence>
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="RIDetectorInfo" type="RIDetectorInfoType" minOccurs="0"/>
+			<xs:element name="UVvisInfo" type="UVvisInfoType" minOccurs="0"/>
+			<xs:element name="LightScatteringInfo" type="LightScatteringInfoType" minOccurs="0"/>
+			<xs:element name="ViscometerInfo" type="ViscometerInfoType" minOccurs="0"/>
+			<xs:element name="ColumnInfo" type="ColumnInfoListType" minOccurs="0"/>
+		</xs:choice>
 	</xs:complexType>
 	<xs:complexType name="InstrumentInfoType">
 		<xs:annotation>
@@ -83,15 +79,109 @@
 		<xs:annotation>
 			<xs:documentation>Contains a list of: the elugram data in a binary heap, List of intergration volumes (if multiple intergrations exist), system peak and internal standard peak volumes</xs:documentation>
 		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="InstrumentConfiguration" type="InstrumentConfigurationType"/>
+			<xs:element name="RawData" type="RawDataType">
+				<xs:annotation>
+					<xs:documentation>Stored as a binary blob</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="CalibrationType"/>
 	<xs:complexType name="MetadataType">
 		<xs:attribute name="date" type="xs:date" use="required"/>
-		<xs:attribute name="MethodName" type="xs:string" use="optional"/>
+		<xs:attribute name="MethodName" type="xs:string" use="required"/>
 		<xs:attribute name="CalibrationName" type="xs:string" use="optional"/>
 		<xs:attribute name="Operator" type="xs:string" use="optional"/>
 		<xs:attribute name="InstrumentName" type="xs:string" use="optional"/>
-		<xs:attribute name="RunTime" type="xs:time" use="required"/>
+		<xs:attribute name="RunTime" type="xs:time" use="optional"/>
 		<xs:attribute name="lastServiceDate" type="xs:date" use="optional"/>
 	</xs:complexType>
+	<xs:complexType name="RIDetectorInfoType">
+		<xs:sequence>
+			<xs:element name="IDinfo" type="InstrumentInfoType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ViscometerInfoType">
+		<xs:sequence>
+			<xs:element name="IDinfo" type="InstrumentInfoType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="UVvisInfoType">
+		<xs:sequence>
+			<xs:element name="IDinfo" type="InstrumentInfoType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RIDetectorRunType"/>
+	<xs:complexType name="ViscometerRunType"/>
+	<xs:complexType name="UVvisRunType"/>
+	<xs:complexType name="LightScatteringInfoType">
+		<xs:sequence>
+			<xs:element name="IDinfo" type="InstrumentInfoType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="LightScatteringRunType"/>
+	<xs:complexType name="InstrumentConfigurationType">
+		<xs:sequence>
+			<xs:element name="ColumnList" type="ColumnListConfigurationType">
+				<xs:annotation>
+					<xs:documentation>Columns stored in the order the sample runs through, column at the top of the list will be the column which separates the sample first</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="OvenList" type="OvenListType"/>
+			<xs:element name="Pump" type="PumpConfigurationType"/>
+			<xs:element name="Injector" type="InjectorConfigurationType" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="BinaryHeapType"/>
+	<xs:complexType name="RawDataType">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="RIrawdata" minOccurs="0"/>
+			<xs:element name="LightScatteringRawdata" minOccurs="0"/>
+			<xs:element name="UVvisRawdata" minOccurs="0"/>
+			<xs:element name="ViscometerRawdata" minOccurs="0"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="OvenListType">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="ColumnOven" type="OvenConfigurationType" minOccurs="0"/>
+			<xs:element name="gpcOven" type="OvenConfigurationType" minOccurs="0"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="UVvisConfigurationType"/>
+	<xs:complexType name="ColumnInfoType">
+		<xs:attribute name="DateOfInstallation" type="xs:date" use="optional"/>
+		<xs:attribute name="PlateCount" type="xs:int" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="ColumnInfoListType">
+		<xs:sequence>
+			<xs:element name="IDinfo" type="InstrumentInfoType"/>
+			<xs:element name="Column" type="ColumnInfoType" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RIDetectorConfigurationType"/>
+	<xs:complexType name="LightScatteringConfigurationType"/>
+	<xs:complexType name="ColumnListConfigurationType">
+		<xs:sequence>
+			<xs:element name="GuardColumn" type="ColumnConfigurationType" minOccurs="0"/>
+			<xs:element name="Column" type="ColumnConfigurationType" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="PumpConfigurationType">
+		<xs:attribute name="FlowRate" type="xs:float"/>
+	</xs:complexType>
+	<xs:complexType name="InjectorConfigurationType">
+		<xs:attribute name="InjectionVolume" type="xs:int"/>
+	</xs:complexType>
+	<xs:complexType name="OvenConfigurationType">
+		<xs:attribute name="Temperature" type="xs:int"/>
+	</xs:complexType>
+	<xs:complexType name="ColumnConfigurationType">
+		<xs:attribute name="PoreSizeMin" type="xs:int" use="required"/>
+		<xs:attribute name="PoreSizeMax" type="xs:int" use="required"/>
+		<xs:attribute name="StationaryPhase" type="xs:string" use="optional"/>
+		<xs:attribute name="DateOfInstallation" type="xs:date" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="GuardColumnConfigurationType"/>
 </xs:schema>
