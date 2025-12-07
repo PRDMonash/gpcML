@@ -146,7 +146,7 @@
 		</xs:simpleContent>
 	</xs:complexType>
 	<xs:complexType name="OvenListType">
-		<xs:choice maxOccurs="unbounded">
+		<xs:choice maxOccurs="2">
 			<xs:element name="ColumnOven" type="OvenConfigurationType"/>
 			<xs:element name="gpcOven" type="OvenConfigurationType"/>
 		</xs:choice>
