@@ -77,9 +77,9 @@
 			<xs:documentation>Specific information relating to the equipment to allow easy lookup of the parts</xs:documentation>
 		</xs:annotation>
 		<xs:attribute name="Name" type="xs:string" use="optional"/>
-		<xs:attribute name="SerialNumber" type="xs:int" use="required">
+		<xs:attribute name="SerialNumber" type="xs:string" use="required">
 			<xs:annotation>
-				<xs:documentation>for saving what column were used</xs:documentation>
+				<xs:documentation>for saving what column were used, can be found on product website</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 		<xs:attribute name="Manufacturer" type="xs:string" use="required">
@@ -186,7 +186,7 @@
 	<xs:complexType name="LightScatteringConfigurationType"/>
 	<xs:complexType name="ColumnListConfigurationType">
 		<xs:sequence>
-			<xs:element name="GuardColumn" type="ColumnConfigurationType" minOccurs="0"/>
+			<xs:element name="GuardColumn" type="GuardColumnConfigurationType" minOccurs="0"/>
 			<xs:element name="Column" type="ColumnConfigurationType" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
@@ -217,7 +217,10 @@
 		<xs:attribute name="StationaryPhase" type="xs:string" use="optional"/>
 		<xs:attribute name="DateOfInstallation" type="xs:date" use="optional"/>
 	</xs:complexType>
-	<xs:complexType name="GuardColumnConfigurationType"/>
+	<xs:complexType name="GuardColumnConfigurationType">
+		<xs:attribute name="ParticleSize" type="xs:float" use="optional"/>
+		<xs:attribute name="DateOfInstallation" type="xs:date"/>
+	</xs:complexType>
 	<xs:complexType name="CalibrationDataType">
 		<xs:sequence>
 			<xs:element name="TypeOfFit" type="DegreePolyType">
