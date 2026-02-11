@@ -14,6 +14,13 @@
 			</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
+			<xs:element name="SummaryValues" minOccurs="0">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="SummaryValuesType"/>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
 			<xs:element name="ContactList" type="ContactListType"/>
 			<xs:element name="Metadata" type="MetadataType"/>
 			<xs:element name="InstrumentInfoList" type="InstrumentListType" minOccurs="0"/>
@@ -48,7 +55,7 @@
 		<xs:attribute name="FirstName" type="xs:string" use="required"/>
 		<xs:attribute name="MiddleName" type="xs:string" use="optional"/>
 		<xs:attribute name="LastName" type="xs:string" use="required"/>
-		<xs:attribute name="E-mail" type="xs:string" use="required"/>
+		<xs:attribute name="E-mail" type="xs:string"/>
 		<xs:attribute name="Institution" type="xs:string" use="optional"/>
 	</xs:complexType>
 	<xs:complexType name="ContactListType">
@@ -77,9 +84,9 @@
 			<xs:documentation>Specific information relating to the equipment to allow easy lookup of the parts</xs:documentation>
 		</xs:annotation>
 		<xs:attribute name="Name" type="xs:string" use="optional"/>
-		<xs:attribute name="SerialNumber" type="xs:string" use="required">
+		<xs:attribute name="SerialNumber" type="xs:string">
 			<xs:annotation>
-				<xs:documentation>for saving what column were used, can be found on product website</xs:documentation>
+				<xs:documentation>for saving what column were used, can be found on providers website, must be an unambiguous string which can be directly linked to the item.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 		<xs:attribute name="Manufacturer" type="xs:string" use="required">
@@ -179,7 +186,6 @@
 	<xs:complexType name="ColumnInfoListType">
 		<xs:sequence>
 			<xs:element name="IDinfo" type="InstrumentInfoType"/>
-			<xs:element name="Column" type="ColumnInfoType" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="RIDetectorConfigurationType"/>
@@ -187,7 +193,11 @@
 	<xs:complexType name="ColumnListConfigurationType">
 		<xs:sequence>
 			<xs:element name="GuardColumn" type="GuardColumnConfigurationType" minOccurs="0"/>
-			<xs:element name="Column" type="ColumnConfigurationType" maxOccurs="unbounded"/>
+			<xs:element name="Column" type="ColumnConfigurationType" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Information should be looked up on the relevant providers website</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="PumpConfigurationType">
@@ -261,7 +271,11 @@
 		<xs:sequence>
 			<xs:element name="SolventName" type="xs:string"/>
 			<xs:element name="AdditiveName" type="xs:string" minOccurs="0"/>
-			<xs:element name="RecyclingMode" type="xs:boolean"/>
+			<xs:element name="RecyclingMode" type="xs:boolean">
+				<xs:annotation>
+					<xs:documentation>simple boolean value</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 			<xs:choice minOccurs="1" maxOccurs="2">
 				<xs:element name="Ratio" type="RatioType">
 					<xs:annotation>
@@ -308,4 +322,52 @@
 			<xs:minInclusive value="0"/>
 		</xs:restriction>
 	</xs:simpleType>
+	<xs:complexType name="SummaryValuesType">
+		<xs:annotation>
+			<xs:documentation>Contains summary values for the polymer, it is best practise to ignore these values if recieving from </xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Mn">
+				<xs:annotation>
+					<xs:documentation>Must be in g/mol</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Mw">
+				<xs:annotation>
+					<xs:documentation>Must be in g/mol</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="PDI"/>
+			<xs:element name="Mz">
+				<xs:annotation>
+					<xs:documentation>Must be in g/mol</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Mv">
+				<xs:annotation>
+					<xs:documentation>Must be in g/mol</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="n" type="xs:float">
+				<xs:annotation>
+					<xs:documentation>Must be in ml/g</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Vp">
+				<xs:annotation>
+					<xs:documentation>Must be in ml</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Mp">
+				<xs:annotation>
+					<xs:documentation>Must be in g/mol</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="A">
+				<xs:annotation>
+					<xs:documentation>Must be in ml*v</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
 </xs:schema>
