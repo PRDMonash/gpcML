@@ -192,7 +192,7 @@
 	<xs:complexType name="LightScatteringConfigurationType"/>
 	<xs:complexType name="ColumnListConfigurationType">
 		<xs:sequence>
-			<xs:element name="GuardColumn" type="GuardColumnConfigurationType" minOccurs="0"/>
+			<xs:element name="GuardColumn" type="ColumnConfigurationType" minOccurs="0"/>
 			<xs:element name="Column" type="ColumnConfigurationType" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>Information should be looked up on the relevant providers website</xs:documentation>
@@ -327,43 +327,43 @@
 			<xs:documentation>Contains summary values for the polymer, it is best practise to ignore these values if recieving from </xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="Mn">
+			<xs:element name="Mn" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Mw">
+			<xs:element name="Mw" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="PDI"/>
-			<xs:element name="Mz">
+			<xs:element name="PDI" minOccurs="0"/>
+			<xs:element name="Mz" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Mv">
+			<xs:element name="Mv" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="n" type="xs:float">
+			<xs:element name="n" type="xs:float" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in ml/g</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Vp">
+			<xs:element name="Vp" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in ml</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Mp">
+			<xs:element name="Mp" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="A">
+			<xs:element name="A" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>Must be in ml*v</xs:documentation>
 				</xs:annotation>
