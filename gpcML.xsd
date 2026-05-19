@@ -97,7 +97,7 @@
 	</xs:complexType>
 	<xs:complexType name="RuntimeDataType">
 		<xs:annotation>
-			<xs:documentation>Contains a list of: the elugram data in a binary heap, List of intergration volumes (if multiple intergrations exist), system peak and internal standard peak volumes</xs:documentation>
+			<xs:documentation>Contains a list of: the elugram data in a binary heap, List of integration volumes (if multiple integrations exist), system peak and internal standard peak volumes</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
 			<xs:element name="InstrumentConfiguration" type="InstrumentConfigurationType"/>
@@ -106,7 +106,7 @@
 					<xs:documentation>Stored as a base64 encoded data</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="IntergrationValues" type="IntergrationValuesListType"/>
+			<xs:element name="integrationValues" type="integrationValuesListType"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="CalibrationType"/>
@@ -298,14 +298,14 @@
 			<xs:pattern value="(100|[0-9]?[0-9]):(100|[0-9]?[0-9])"/>
 		</xs:restriction>
 	</xs:simpleType>
-	<xs:complexType name="IntergrationValuesListType">
+	<xs:complexType name="integrationValuesListType">
 		<xs:sequence>
-			<xs:element name="Baseline" type="IntergrationValuesType"/>
-			<xs:element name="Peaks" type="IntergrationValuesType" maxOccurs="unbounded"/>
-			<xs:element name="Solvent" type="IntergrationValuesType" maxOccurs="unbounded"/>
+			<xs:element name="Baseline" type="integrationValuesType"/>
+			<xs:element name="Peaks" type="integrationValuesType" maxOccurs="unbounded"/>
+			<xs:element name="Solvent" type="integrationValuesType" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
-	<xs:complexType name="IntergrationValuesType">
+	<xs:complexType name="integrationValuesType">
 		<xs:attribute name="StartVolume" type="xs:float" use="required">
 			<xs:annotation>
 				<xs:documentation>Must be saved in mL</xs:documentation>
