@@ -387,6 +387,8 @@
 					<xs:documentation>Must be in ml*v</xs:documentation>
 				</xs:annotation>
 			</xs:element>
+			<xs:element minOccurs="0" name="AtomCount" type="xs:positiveInteger"/>
+			<xs:element minOccurs="0" name="BondCount" type="xs:positiveInteger"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="MHKSListType">
