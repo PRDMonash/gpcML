@@ -346,23 +346,23 @@
 			<xs:documentation>Contains summary values for the polymer, it is best practise to ignore these values if recieving from </xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="Mn" minOccurs="0">
+			<xs:element name="Mn" minOccurs="0" type="xs:float">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Mw" minOccurs="0">
+			<xs:element name="Mw" minOccurs="0" type="xs:float">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="PDI" minOccurs="0"/>
-			<xs:element name="Mz" minOccurs="0">
+			<xs:element name="PDI" minOccurs="0" type="xs:float"/>
+			<xs:element name="Mz" minOccurs="0" type="xs:float">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Mv" minOccurs="0">
+			<xs:element name="Mv" minOccurs="0" type="xs:float">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
@@ -372,17 +372,17 @@
 					<xs:documentation>Must be in ml/g</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Vp" minOccurs="0">
+			<xs:element name="Vp" minOccurs="0" type="xs:float">
 				<xs:annotation>
 					<xs:documentation>Must be in ml</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="Mp" minOccurs="0">
+			<xs:element name="Mp" minOccurs="0" type="xs:float">
 				<xs:annotation>
 					<xs:documentation>Must be in g/mol</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="A" minOccurs="0">
+			<xs:element name="A" minOccurs="0" type="xs:float">
 				<xs:annotation>
 					<xs:documentation>Must be in ml*v</xs:documentation>
 				</xs:annotation>
