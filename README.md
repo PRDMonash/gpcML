@@ -5,10 +5,10 @@ It is intended to fix the issues surrounding data sharing by creating a standard
 which users can store and share experimental data.
 
 ## Scope
-Currently the standard only works for SEC/GPC setups which utilise an IR detector, work is still in 
+Currently the standard only works for SEC/GPC setups which utilise an RI detector, work is still in 
 progress for expanding the types of detectors which can be stored.
 
-This standard works for any GPC/SEC data which utilises an IR detector.
+This standard works for any GPC/SEC data which utilises an RI detector.
 
 **The data standard contains:**
 | Data Type | Description |  
