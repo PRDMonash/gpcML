@@ -72,7 +72,7 @@ All relationships can be found within the documentation PDF. You can locate the 
 the most upto date version of this standard is 1.0
 
 ## Tools
-Currently the only tool that supports gpcML is gpcML.com, this allows you to validate, extract some information, and quickly plot the various distributions of a analysed polymer sample. If you are interested in creating a tool for gpcML or are a vendor looking to create an export filter, please reach out to Tanja.Junkers@monash.edu.
+Currently the only tool that supports gpcML is www.gpcML.com, this allows you to validate, extract some information, and quickly plot the various distributions of a analysed polymer sample. If you are interested in creating a tool for gpcML or are a vendor looking to create an export filter, please reach out to Tanja.Junkers@monash.edu.
 
 ## Contributing
 
