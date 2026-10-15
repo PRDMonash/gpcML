@@ -1,0 +1,2032 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>
+<svg id='svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' onload='loadSVG();'>
+<title>XsdVi</title>
+<script type='text/ecmascript'><![CDATA[
+
+  var efBoxes = [];
+  var eSvg = null;
+
+////////// loadSVG()
+  function loadSVG() {
+    efBoxes = getElementsByClassName('box', document.getElementsByTagName('g'));
+    eSvg = document.getElementById('svg');
+    expandAll();
+  }
+
+////////// getElementsByClassName(string, nodeList)
+  function getElementsByClassName(sClass, nlNodes) {
+    var elements = [];
+    for (var i=0; i<nlNodes.length; i++) {
+      if(nlNodes.item(i).nodeType==1 && sClass==nlNodes.item(i).getAttribute('class')) {
+        elements.push(nlNodes.item(i));
+      }
+    }
+    return elements;
+  }
+
+////////// show(string)
+  function show(sId) {
+    var useElement = document.getElementById('s'+sId);
+    var moveNext = false;
+    var eBoxLast;
+    var maxX = 500;
+    
+    if (notPlus(useElement)) {
+      eBoxLast = document.getElementById(sId);
+      setPlus(useElement);
+      for (var i=0; i<efBoxes.length; i++) {
+        var eBox = efBoxes[i];
+        if (moveNext) {
+          move(eBoxLast, eBox);
+        }
+        else if (isDescendant(sId, eBox.id)) {
+          eBox.setAttribute('visibility', 'hidden');
+        }
+        else if (isHigherBranch(sId, eBox.id)) {
+          move(eBoxLast, eBox);
+          moveNext = true;
+        }
+        if (eBox.getAttribute('visibility') != 'hidden') {
+          eBoxLast = eBox;
+          x = xTrans(eBox);
+          if (x > maxX) maxX = x;
+        }
+      }
+    }
+
+    else {
+      setMinus(useElement);
+      var skipDescendantsOf;
+      for (var i=0; i<efBoxes.length; i++) {
+        var eBox = efBoxes[i];
+        if (moveNext) {
+          move(eBoxLast, eBox);
+        }
+        else if (isDescendant(sId, eBox.id) && (!skipDescendantsOf || !isDescendant(skipDescendantsOf.id, eBox.id))) {
+          eBox.setAttribute('visibility', 'visible');
+          move(eBoxLast, eBox);
+          if (nextClosed(eBox)) skipDescendantsOf = eBox;
+        }
+        else if (isHigherBranch(sId, eBox.id)) {
+          move(eBoxLast, eBox);
+          moveNext = true;
+        }
+        if (eBox.getAttribute('visibility') != 'hidden') {
+          eBoxLast = eBox;
+          x = xTrans(eBox);
+          if (x > maxX) maxX = x;
+        }
+      }
+    }
+    //setHeight(yTrans(eBoxLast)+"+(AbstractSymbol.MAX_HEIGHT+AbstractSymbol.Y_INDENT)+");\n"+
+    setHeight(yTrans(eBoxLast)+71);
+    setWidth(maxX+360);
+  }
+
+////////// collapseAll()
+  function collapseAll() {
+    for (var i=0; i<efBoxes.length; i++) {
+      var eBox = efBoxes[i];
+      var useElement = document.getElementById('s'+eBox.id);
+      if (useElement) setPlus(useElement);
+      if (eBox.id != '_1') eBox.setAttribute('visibility', 'hidden');
+    }
+    setHeight(400);
+    setWidth(500);
+  }
+
+////////// expandAll()
+  function expandAll() {
+    var eBoxLast;
+    var maxX = 0;
+    for (var i=0; i<efBoxes.length; i++) {
+      var eBox = efBoxes[i];
+      var useElement = document.getElementById('s'+eBox.id);
+      if (useElement) setMinus(useElement);
+      move(eBoxLast, eBox);
+      eBox.setAttribute('visibility', 'visible');
+      eBoxLast = eBox;
+      var x = xTrans(eBox);
+      if (x > maxX) maxX = x;
+    }
+    //setHeight(yTrans(eBoxLast)+"+(AbstractSymbol.MAX_HEIGHT+AbstractSymbol.Y_INDENT)+");\n"+
+    setHeight(yTrans(eBoxLast)+71);
+    setWidth(maxX+360);
+  }
+
+////////// makeVisible(string)
+  function makeVisible(sId) {
+    var childNodes = document.getElementById(sId).childNodes;
+    var hidden = getElementsByClassName('hidden', childNodes);
+    var visible = getElementsByClassName('visible', childNodes);
+    inheritVisibility(hidden);
+    hiddenVisibility(visible);
+  }
+
+////////// makeHidden(string)
+  function makeHidden(sId) {
+    var childNodes = document.getElementById(sId).childNodes;
+    var hidden = getElementsByClassName('hidden', childNodes);
+    var visible = getElementsByClassName('visible', childNodes);
+    inheritVisibility(visible);
+    hiddenVisibility(hidden);
+  }
+
+////////// inheritVisibility(element[])
+  function inheritVisibility(efElements) {
+    for (var i=0; i<efElements.length; i++) {
+      efElements[i].setAttribute('visibility', 'inherit');
+    }
+  }
+
+////////// hiddenVisibility(element[])
+  function hiddenVisibility(efElements) {
+    for (var i=0; i<efElements.length; i++) {
+      efElements[i].setAttribute('visibility', 'hidden');
+    }
+  }
+
+////////// nextClosed(element)
+  function nextClosed(eBox) {
+    var useElement = document.getElementById('s'+eBox.id);
+    return (useElement && !notPlus(useElement));
+  }
+
+////////// isHigherBranch(string, string)
+  function isHigherBranch(sSerialLower, sSerialHigher) {
+    var sLower = sSerialLower.split('_');
+    var sHigher = sSerialHigher.split('_');
+    for (var i=0; i<sLower.length; i++) {
+      if (Number(sHigher[i]) > Number(sLower[i])) return true;
+      else if (Number(sHigher[i]) < Number(sLower[i])) return false;
+    }
+    return false;
+  }
+
+////////// isOnHigherLevel(element, element)
+  function isOnHigherLevel(eBoxLower, eBoxHigher) {
+    var sLower = eBoxLower.id.split('_');
+    var sHigher = eBoxHigher.id.split('_');
+    for (var i=0; i<sLower.length; i++) {
+      if (Number(sHigher[i]) > Number(sLower[i])) return true;
+    }
+    return false;
+  }
+
+////////// isDescendant(string, string)
+  function isDescendant(sSerialAsc, sSerialDesc) {
+    return (sSerialDesc.length > sSerialAsc.length && sSerialDesc.indexOf(sSerialAsc) === 0);
+  }
+
+////////// getParent(element)
+  function getParent(eBox) {
+    var serial = eBox.id.substring(0, eBox.id.lastIndexOf('_'));
+    return document.getElementById(serial);
+  }
+
+////////// move(element, element)
+  function move(eBoxLast, eBox) {
+    if (!eBoxLast) return;
+    if (isOnHigherLevel(eBoxLast, eBox)) {
+      //setYTrans(eBox, yTrans(eBoxLast)+"+(AbstractSymbol.MAX_HEIGHT+AbstractSymbol.Y_INDENT)+");\n"+
+      var attDescHeight = eBoxLast.getAttribute('data-desc-height-rest');
+      var attDescX = Number(eBoxLast.getAttribute('data-desc-x'));
+      var attX = xTrans(eBox);
+      var descHeight = Number(attDescHeight);
+      var heightAddon = 0;
+
+      var currWidth = eBox.getElementsByClassName("shadow")[0];
+      if (currWidth) {
+        currWidth = Number(currWidth.getAttribute("width"));
+      } else {
+        currWidth = 0;
+      }
+      if(descHeight && ((attDescX >= attX && attDescX < attX + currWidth) || (attX < attDescX))) heightAddon = descHeight;
+
+      setYTrans(eBox, yTrans(eBoxLast)+71+heightAddon);
+      var parent = getParent(eBox);
+      var line = document.getElementById('p'+eBox.id);
+      if (!parent || !line) return;
+		//"      line.y1.baseVal.valueInSpecifiedUnits = yTrans(parent)-yTrans(eBox)+"+AbstractSymbol.MAX_HEIGHT/2+";
+      //line.setAttribute('y1', String(yTrans(parent)-yTrans(eBox)+"+AbstractSymbol.MAX_HEIGHT/2+"));\n"+
+      line.setAttribute('y1', String(yTrans(parent)-yTrans(eBox)+23));
+    }
+    else {
+      setYTrans(eBox, yTrans(eBoxLast));
+    }
+  }
+
+////////// notPlus(element)
+  function notPlus(eUseElement) {
+    return (eUseElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href') != '#plus');
+  }
+
+////////// setPlus(element)
+  function setPlus(eUseElement) {
+    eUseElement.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#plus');
+  }
+
+////////// setMinus(element)
+  function setMinus(eUseElement) {
+    eUseElement.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#minus');
+  }
+
+////////// setHeight(number)
+  function setHeight(nHeight) {
+    eSvg.setAttribute('height', nHeight);
+  }
+
+////////// setWidth(number)
+  function setWidth(nWidth) {
+    eSvg.setAttribute('width', nWidth);
+  }
+
+////////// xyTrans(element)
+  function xTrans(eBox) {
+		//"    return eBox.transform.baseVal.getItem(0).matrix.e;
+    var transform = eBox.getAttribute('transform');
+    var x = Number(transform.substring(10, Number(transform.length)-1).split(',')[0]);
+    if(!x) x = 0;
+    return x;
+  }
+
+////////// yTrans(element)
+  function yTrans(eBox) {
+		//"    return eBox.transform.baseVal.getItem(0).matrix.f;
+    var transform = eBox.getAttribute('transform');
+    var y = Number(transform.substring(10, Number(transform.length)-1).split(',')[1]);
+    if(!y) y = 0;
+    return y;
+  }
+
+////////// setYTrans(element, number)
+  function setYTrans(eBox, nValue) {
+		//"    return eBox.transform.baseVal.getItem(0).matrix.f = nValue;
+    eBox.setAttribute('transform', 'translate('+xTrans(eBox)+','+nValue+')');
+  }
+
+]]></script>
+<defs>
+<style type='text/css'><![CDATA[
+svg {pointer-events: none;}
+text {font-family: arial; font-size: 11px;}
+line, polyline, polygon {fill: none; stroke: black;}
+
+.strong {font-size: 12px; font-weight: bold;}
+.small {font-size: 10px;}
+.big {font-size: 15px; fill: #882222;}
+
+.button {fill: white; stroke: black; pointer-events: all;}
+.shadow {fill: #ccccd8; stroke: none;}
+.connection {fill: none; stroke: #666666;}
+.empty {fill: none; stroke: black;}
+.filled {fill: black; stroke: none;}
+
+.boxelement, .boxany, .boxattribute1, .boxanyattribute {fill: #FFFFBB; stroke: #776633; pointer-events: all;}
+.boxelementoptional {fill: #FFFFBB; stroke: #776633; pointer-events: all; stroke-dasharray: 2;}
+.boxattribute2 {fill: #FFFFBB; stroke: #776633; pointer-events: all; stroke-dasharray: 2;}
+.boxschema, .boxloop, .boxcompositor {fill: #E7EBF3; stroke: #666677;}
+.boxselector, .boxfield, .boxidc {fill: #E0F7B7; stroke: #667733;}
+
+.lax {fill: white; stroke: black;}
+.skip {fill: #cc6666; stroke: black;}
+.strict {fill: black; stroke: none;}
+
+.border {fill: #f9f9f9; stroke: #dddddd;}
+
+.elementlink {fill: blue;}
+
+.desc {fill: #888888;}
+]]></style>
+  <symbol class='button' id='plus'>
+    <rect x='1' y='1' width='10' height='10'/>
+    <line x1='3' y1='6' x2='9' y2='6'/>
+    <line x1='6' y1='3' x2='6' y2='9'/>
+  </symbol>
+  <symbol class='button' id='minus'>
+    <rect x='1' y='1' width='10' height='10'/>
+    <line x1='3' y1='6' x2='9' y2='6'/>
+  </symbol>
+
+</defs>
+
+<rect class='button' x='300' y='10' width='20' height='20' onclick='collapseAll()'/>
+<line x1='303' y1='20' x2='317' y2='20'/>
+<text x='330' y='20'>collapse all</text>
+<rect class='button' x='400' y='10' width='20' height='20' onclick='expandAll()'/>
+<line x1='403' y1='20' x2='417' y2='20'/>
+<line x1='410' y1='13' x2='410' y2='27'/>
+<text x='430' y='20'>expand all</text>
+<g id='_1' class='box' transform='translate(20,50)' data-desc-height='0' data-desc-height-rest='0' data-desc-x='0'>
+<rect class='boxschema' x='0' y='12' width='63' height='21'/>
+<text x='5' y='27'><tspan class='big'>/ </tspan>schema</text>
+<use x='62' y='17' xlink:href='#minus' id='s_1' onclick='show("_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_gpcML'">
+<g id='_1_1' class='box' transform='translate(128,50)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='128'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>gpcML</text>
+<text class='visible' x='5' y='41'>type: gpcMLType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Root element of the</text>
+<text x='5' y='87' class='desc'>XSD</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='104' y='17' xlink:href='#minus' id='s_1_1' onclick='show("_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1' class='box' transform='translate(278,50)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='128'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1' onclick='show("_1_1_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_SummaryValues'">
+<g id='_1_1_1_1' class='box' transform='translate(383,50)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='128'>
+<rect class='shadow' x='3' y='3' width='96' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='96' height='46'/>
+<text class='strong elementlink' x='5' y='27'>SummaryValues</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='95' y='17' xlink:href='#minus' id='s_1_1_1_1' onclick='show("_1_1_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_1_1' class='box' transform='translate(524,50)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='128'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_1_1' onclick='show("_1_1_1_1_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Mn'">
+<g id='_1_1_1_1_1_1' class='box' transform='translate(629,50)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Mn</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in g/mol</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Mw'">
+<g id='_1_1_1_1_1_2' class='box' transform='translate(629,121)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Mw</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in g/mol</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_PDI'">
+<g id='_1_1_1_1_1_3' class='box' transform='translate(629,192)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>PDI</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Mz'">
+<g id='_1_1_1_1_1_4' class='box' transform='translate(629,263)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Mz</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in g/mol</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Mv'">
+<g id='_1_1_1_1_1_5' class='box' transform='translate(629,334)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Mv</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in g/mol</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_n'">
+<g id='_1_1_1_1_1_6' class='box' transform='translate(629,405)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>n</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in ml/g</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Vp'">
+<g id='_1_1_1_1_1_7' class='box' transform='translate(629,476)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Vp</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in ml</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Mp'">
+<g id='_1_1_1_1_1_8' class='box' transform='translate(629,547)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Mp</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in g/mol</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_A'">
+<g id='_1_1_1_1_1_9' class='box' transform='translate(629,618)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='99' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='99' height='46'/>
+<text class='strong elementlink' x='5' y='27'>A</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Must be in ml*v</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_AtomCount'">
+<g id='_1_1_1_1_1_10' class='box' transform='translate(629,689)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>AtomCount</text>
+<text class='visible' x='5' y='41'>type: xs:positiveInteger</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_BondCount'">
+<g id='_1_1_1_1_1_11' class='box' transform='translate(629,760)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>BondCount</text>
+<text class='visible' x='5' y='41'>type: xs:positiveInteger</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' id='p_1_1_1_1_1_11' x1='-35' y1='-687' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_ContactList'">
+<g id='_1_1_1_2' class='box' transform='translate(383,831)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='141' height='46'/>
+<rect class='boxelement' x='0' y='0' width='141' height='46'/>
+<text class='strong elementlink' x='5' y='27'>ContactList</text>
+<text class='visible' x='5' y='41'>type: ContactListType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='140' y='17' xlink:href='#minus' id='s_1_1_1_2' onclick='show("_1_1_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_2_1' class='box' transform='translate(569,831)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_2_1' onclick='show("_1_1_1_2_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Contact'">
+<g id='_1_1_1_2_1_1' class='box' transform='translate(674,831)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='117' height='46'/>
+<rect class='boxelement' x='0' y='0' width='117' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Contact</text>
+<text class='visible' x='5' y='41'>type: ContactType</text>
+<text x='5' y='59'>1..∞</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='116' y='17' xlink:href='#minus' id='s_1_1_1_2_1_1' onclick='show("_1_1_1_2_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_2_1_1_1' class='box' transform='translate(836,831)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> E-mail</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_2_1_1_2' class='box' transform='translate(836,902)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> FirstName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_2_1_1_3' class='box' transform='translate(836,973)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Institution</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_2_1_1_4' class='box' transform='translate(836,1044)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> LastName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_2_1_1_5' class='box' transform='translate(836,1115)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> MiddleName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_2_1_1_5' x1='-35' y1='-261' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Metadata'">
+<g id='_1_1_1_3' class='box' transform='translate(383,1186)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='123' height='46'/>
+<rect class='boxelement' x='0' y='0' width='123' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Metadata</text>
+<text class='visible' x='5' y='41'>type: MetadataType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='122' y='17' xlink:href='#minus' id='s_1_1_1_3' onclick='show("_1_1_1_3")'/>
+</g>
+
+</a>
+<g id='_1_1_1_3_1' class='box' transform='translate(551,1186)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<text x='5' y='52'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_3_1' onclick='show("_1_1_1_3_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_StringRepresenation'">
+<g id='_1_1_1_3_1_1' class='box' transform='translate(656,1186)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='153' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='153' height='46'/>
+<text class='strong elementlink' x='5' y='27'>StringRepresenation</text>
+<text class='visible' x='5' y='41'>type: StringRepListType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='152' y='17' xlink:href='#minus' id='s_1_1_1_3_1_1' onclick='show("_1_1_1_3_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_3_1_1_1' class='box' transform='translate(854,1186)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<text x='5' y='52'>0..3</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_3_1_1_1' onclick='show("_1_1_1_3_1_1_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_pSMILES'">
+<g id='_1_1_1_3_1_1_1_1' class='box' transform='translate(959,1186)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>pSMILES</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_BigSMILES'">
+<g id='_1_1_1_3_1_1_1_2' class='box' transform='translate(959,1257)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>BigSMILES</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_G-BigSMILES'">
+<g id='_1_1_1_3_1_1_1_3' class='box' transform='translate(959,1328)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>G-BigSMILES</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_3_1_1_1_3' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+</a>
+<g id='_1_1_1_3_2' class='box' transform='translate(551,1399)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='108' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='108' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> CalibrationName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_3' class='box' transform='translate(551,1470)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> InstrumentName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_4' class='box' transform='translate(551,1541)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='629'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> MethodName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_5' class='box' transform='translate(551,1612)' data-desc-height='70' data-desc-height-rest='70' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='120' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='120' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> ObservationalData</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Add comments relating</text>
+<text x='5' y='87' class='desc'>to topology,</text>
+<text x='5' y='101' class='desc'>functionality, monomer</text>
+<text x='5' y='115' class='desc'>composition, polymer</text>
+<text x='5' y='129' class='desc'>type, ect</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_6' class='box' transform='translate(551,1683)' data-desc-height='70' data-desc-height-rest='70' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Operator</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>If multiple</text>
+<text x='5' y='87' class='desc'>contacts, state</text>
+<text x='5' y='101' class='desc'>name (first-last)</text>
+<text x='5' y='115' class='desc'>of who ran the</text>
+<text x='5' y='129' class='desc'>sample</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_7' class='box' transform='translate(551,1754)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='93' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='93' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> RunTime</text>
+<text class='visible' x='5' y='41'>type: xs:time</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Length of the run</text>
+<text x='5' y='87' class='desc'>sample in Minutes</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_8' class='box' transform='translate(551,1825)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> SampleName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_9' class='box' transform='translate(551,1896)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='93' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='93' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> date</text>
+<text class='visible' x='5' y='41'>type: xs:date</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_3_10' class='box' transform='translate(551,1967)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='108' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='108' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> lastServiceDate</text>
+<text class='visible' x='5' y='41'>type: xs:date</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_3_10' x1='-35' y1='-758' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_InstrumentInfoList'">
+<g id='_1_1_1_4' class='box' transform='translate(383,2038)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>InstrumentInfoList</text>
+<text class='visible' x='5' y='41'>type: InstrumentListType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4' onclick='show("_1_1_1_4")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1' class='box' transform='translate(587,2038)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle class='empty' cx='42' cy='23' r='2'/>
+<circle class='empty' cx='42' cy='32' r='2'/>
+<polyline points='26,23 34,23 34,14 40,14'/>
+<text x='5' y='52'>1..∞</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_4_1' onclick='show("_1_1_1_4_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_RIDetectorInfo'">
+<g id='_1_1_1_4_1_1' class='box' transform='translate(692,2038)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelement' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>RIDetectorInfo</text>
+<text class='visible' x='5' y='41'>type: RIDetectorInfoType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_1' onclick='show("_1_1_1_4_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_1_1' class='box' transform='translate(896,2038)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_4_1_1_1' onclick='show("_1_1_1_4_1_1_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_IDinfo'">
+<g id='_1_1_1_4_1_1_1_1' class='box' transform='translate(1001,2038)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='551'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelement' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>IDinfo</text>
+<text class='visible' x='5' y='41'>type: InstrumentInfoType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_1_1_1' onclick='show("_1_1_1_4_1_1_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_1_1_1_1' class='box' transform='translate(1205,2038)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Manufacturer</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>columns were used</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_1_1_1_2' class='box' transform='translate(1205,2109)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Name</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_1_1_1_3' class='box' transform='translate(1205,2180)' data-desc-height='126' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> SerialNumber</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>column were used,</text>
+<text x='5' y='101' class='desc'>can be found on</text>
+<text x='5' y='115' class='desc'>providers website,</text>
+<text x='5' y='129' class='desc'>must be an</text>
+<text x='5' y='143' class='desc'>unambiguous string</text>
+<text x='5' y='157' class='desc'>which can be</text>
+<text x='5' y='171' class='desc'>directly linked to</text>
+<text x='5' y='185' class='desc'>the item.</text>
+<line class='connection' id='p_1_1_1_4_1_1_1_1_3' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_UVvisInfo'">
+<g id='_1_1_1_4_1_2' class='box' transform='translate(692,2251)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='129' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='129' height='46'/>
+<text class='strong elementlink' x='5' y='27'>UVvisInfo</text>
+<text class='visible' x='5' y='41'>type: UVvisInfoType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='128' y='17' xlink:href='#minus' id='s_1_1_1_4_1_2' onclick='show("_1_1_1_4_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_2_1' class='box' transform='translate(866,2251)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_4_1_2_1' onclick='show("_1_1_1_4_1_2_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_IDinfo'">
+<g id='_1_1_1_4_1_2_1_1' class='box' transform='translate(971,2251)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelement' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>IDinfo</text>
+<text class='visible' x='5' y='41'>type: InstrumentInfoType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_2_1_1' onclick='show("_1_1_1_4_1_2_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_2_1_1_1' class='box' transform='translate(1175,2251)' data-desc-height='28' data-desc-height-rest='80' data-desc-x='1175'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Manufacturer</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>columns were used</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_2_1_1_2' class='box' transform='translate(1175,2322)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1175'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Name</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_2_1_1_3' class='box' transform='translate(1175,2393)' data-desc-height='126' data-desc-height-rest='126' data-desc-x='1175'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> SerialNumber</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>column were used,</text>
+<text x='5' y='101' class='desc'>can be found on</text>
+<text x='5' y='115' class='desc'>providers website,</text>
+<text x='5' y='129' class='desc'>must be an</text>
+<text x='5' y='143' class='desc'>unambiguous string</text>
+<text x='5' y='157' class='desc'>which can be</text>
+<text x='5' y='171' class='desc'>directly linked to</text>
+<text x='5' y='185' class='desc'>the item.</text>
+<line class='connection' id='p_1_1_1_4_1_2_1_1_3' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_LightScatteringInfo'">
+<g id='_1_1_1_4_1_3' class='box' transform='translate(692,2464)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1175'>
+<rect class='shadow' x='3' y='3' width='189' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='189' height='46'/>
+<text class='strong elementlink' x='5' y='27'>LightScatteringInfo</text>
+<text class='visible' x='5' y='41'>type: LightScatteringInfoType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='188' y='17' xlink:href='#minus' id='s_1_1_1_4_1_3' onclick='show("_1_1_1_4_1_3")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_3_1' class='box' transform='translate(926,2464)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1175'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_4_1_3_1' onclick='show("_1_1_1_4_1_3_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_IDinfo'">
+<g id='_1_1_1_4_1_3_1_1' class='box' transform='translate(1031,2464)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1175'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelement' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>IDinfo</text>
+<text class='visible' x='5' y='41'>type: InstrumentInfoType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_3_1_1' onclick='show("_1_1_1_4_1_3_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_3_1_1_1' class='box' transform='translate(1235,2464)' data-desc-height='28' data-desc-height-rest='80' data-desc-x='1235'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Manufacturer</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>columns were used</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_3_1_1_2' class='box' transform='translate(1235,2535)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1235'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Name</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_3_1_1_3' class='box' transform='translate(1235,2606)' data-desc-height='126' data-desc-height-rest='126' data-desc-x='1235'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> SerialNumber</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>column were used,</text>
+<text x='5' y='101' class='desc'>can be found on</text>
+<text x='5' y='115' class='desc'>providers website,</text>
+<text x='5' y='129' class='desc'>must be an</text>
+<text x='5' y='143' class='desc'>unambiguous string</text>
+<text x='5' y='157' class='desc'>which can be</text>
+<text x='5' y='171' class='desc'>directly linked to</text>
+<text x='5' y='185' class='desc'>the item.</text>
+<line class='connection' id='p_1_1_1_4_1_3_1_1_3' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_ViscometerInfo'">
+<g id='_1_1_1_4_1_4' class='box' transform='translate(692,2677)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1235'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>ViscometerInfo</text>
+<text class='visible' x='5' y='41'>type: ViscometerInfoType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_4' onclick='show("_1_1_1_4_1_4")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_4_1' class='box' transform='translate(896,2677)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1235'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_4_1_4_1' onclick='show("_1_1_1_4_1_4_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_IDinfo'">
+<g id='_1_1_1_4_1_4_1_1' class='box' transform='translate(1001,2677)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1235'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelement' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>IDinfo</text>
+<text class='visible' x='5' y='41'>type: InstrumentInfoType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_4_1_1' onclick='show("_1_1_1_4_1_4_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_4_1_1_1' class='box' transform='translate(1205,2677)' data-desc-height='28' data-desc-height-rest='80' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Manufacturer</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>columns were used</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_4_1_1_2' class='box' transform='translate(1205,2748)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Name</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_4_1_1_3' class='box' transform='translate(1205,2819)' data-desc-height='126' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> SerialNumber</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>column were used,</text>
+<text x='5' y='101' class='desc'>can be found on</text>
+<text x='5' y='115' class='desc'>providers website,</text>
+<text x='5' y='129' class='desc'>must be an</text>
+<text x='5' y='143' class='desc'>unambiguous string</text>
+<text x='5' y='157' class='desc'>which can be</text>
+<text x='5' y='171' class='desc'>directly linked to</text>
+<text x='5' y='185' class='desc'>the item.</text>
+<line class='connection' id='p_1_1_1_4_1_4_1_1_3' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_ColumnInfo'">
+<g id='_1_1_1_4_1_5' class='box' transform='translate(692,2890)' data-desc-height='112' data-desc-height-rest='112' data-desc-x='692'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelement' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>ColumnInfo</text>
+<text class='visible' x='5' y='41'>type: ColumnInfoListType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>order of storage is what</text>
+<text x='5' y='87' class='desc'>determines which columninfo</text>
+<text x='5' y='101' class='desc'>is associated with which</text>
+<text x='5' y='115' class='desc'>column in runtimedata (i.e</text>
+<text x='5' y='129' class='desc'>first instance of column info</text>
+<text x='5' y='143' class='desc'>is related to the first</text>
+<text x='5' y='157' class='desc'>instance of runtime data</text>
+<text x='5' y='171' class='desc'>column</text>
+<line class='connection' id='p_1_1_1_4_1_5' x1='-35' y1='-829' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_5' onclick='show("_1_1_1_4_1_5")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_5_1' class='box' transform='translate(896,2890)' data-desc-height='0' data-desc-height-rest='112' data-desc-x='692'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_4_1_5_1' onclick='show("_1_1_1_4_1_5_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_IDinfo'">
+<g id='_1_1_1_4_1_5_1_1' class='box' transform='translate(1001,2890)' data-desc-height='0' data-desc-height-rest='112' data-desc-x='692'>
+<rect class='shadow' x='3' y='3' width='159' height='46'/>
+<rect class='boxelement' x='0' y='0' width='159' height='46'/>
+<text class='strong elementlink' x='5' y='27'>IDinfo</text>
+<text class='visible' x='5' y='41'>type: InstrumentInfoType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='158' y='17' xlink:href='#minus' id='s_1_1_1_4_1_5_1_1' onclick='show("_1_1_1_4_1_5_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_4_1_5_1_1_1' class='box' transform='translate(1205,2890)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Manufacturer</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>columns were used</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_5_1_1_2' class='box' transform='translate(1205,2961)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Name</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_4_1_5_1_1_3' class='box' transform='translate(1205,3032)' data-desc-height='126' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> SerialNumber</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>for saving what</text>
+<text x='5' y='87' class='desc'>column were used,</text>
+<text x='5' y='101' class='desc'>can be found on</text>
+<text x='5' y='115' class='desc'>providers website,</text>
+<text x='5' y='129' class='desc'>must be an</text>
+<text x='5' y='143' class='desc'>unambiguous string</text>
+<text x='5' y='157' class='desc'>which can be</text>
+<text x='5' y='171' class='desc'>directly linked to</text>
+<text x='5' y='185' class='desc'>the item.</text>
+<line class='connection' id='p_1_1_1_4_1_5_1_1_3' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_RunTimeData'">
+<g id='_1_1_1_5' class='box' transform='translate(383,3103)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='141' height='46'/>
+<rect class='boxelement' x='0' y='0' width='141' height='46'/>
+<text class='strong elementlink' x='5' y='27'>RunTimeData</text>
+<text class='visible' x='5' y='41'>type: RuntimeDataType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='140' y='17' xlink:href='#minus' id='s_1_1_1_5' onclick='show("_1_1_1_5")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1' class='box' transform='translate(569,3103)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_5_1' onclick='show("_1_1_1_5_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_InstrumentConfiguration'">
+<g id='_1_1_1_5_1_1' class='box' transform='translate(674,3103)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='shadow' x='3' y='3' width='213' height='46'/>
+<rect class='boxelement' x='0' y='0' width='213' height='46'/>
+<text class='strong elementlink' x='5' y='27'>InstrumentConfiguration</text>
+<text class='visible' x='5' y='41'>type: InstrumentConfigurationType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='212' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1' onclick='show("_1_1_1_5_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1' class='box' transform='translate(932,3103)' data-desc-height='0' data-desc-height-rest='126' data-desc-x='1205'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1' onclick='show("_1_1_1_5_1_1_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_ColumnList'">
+<g id='_1_1_1_5_1_1_1_1' class='box' transform='translate(1037,3103)' data-desc-height='56' data-desc-height-rest='80' data-desc-x='1037'>
+<rect class='shadow' x='3' y='3' width='213' height='46'/>
+<rect class='boxelement' x='0' y='0' width='213' height='46'/>
+<text class='strong elementlink' x='5' y='27'>ColumnList</text>
+<text class='visible' x='5' y='41'>type: ColumnListConfigurationType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Columns stored in the order the sample</text>
+<text x='5' y='87' class='desc'>runs through, column at the top of the</text>
+<text x='5' y='101' class='desc'>list will be the column which separates</text>
+<text x='5' y='115' class='desc'>the sample first</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='212' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_1' onclick='show("_1_1_1_5_1_1_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_1_1' class='box' transform='translate(1295,3103)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1037'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_1_1' onclick='show("_1_1_1_5_1_1_1_1_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_GuardColumn'">
+<g id='_1_1_1_5_1_1_1_1_1_1' class='box' transform='translate(1400,3103)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1037'>
+<rect class='shadow' x='3' y='3' width='189' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='189' height='46'/>
+<text class='strong elementlink' x='5' y='27'>GuardColumn</text>
+<text class='visible' x='5' y='41'>type: ColumnConfigurationType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='188' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_1_1_1' onclick='show("_1_1_1_5_1_1_1_1_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_1_1_1_1' class='box' transform='translate(1634,3103)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1037'>
+<rect class='shadow' x='3' y='3' width='126' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='126' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> DateOfInstallation</text>
+<text class='visible' x='5' y='41'>type: xs:date</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_1_1_1_1_1_2' class='box' transform='translate(1634,3174)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1037'>
+<rect class='shadow' x='3' y='3' width='159' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='159' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> PoreSizeMax</text>
+<text class='visible' x='5' y='41'>type: xs:positiveInteger</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_1_1_1_1_1_3' class='box' transform='translate(1634,3245)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1037'>
+<rect class='shadow' x='3' y='3' width='159' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='159' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> PoreSizeMin</text>
+<text class='visible' x='5' y='41'>type: xs:positiveInteger</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_1_1_1_1_1_4' class='box' transform='translate(1634,3316)' data-desc-height='0' data-desc-height-rest='80' data-desc-x='1037'>
+<rect class='shadow' x='3' y='3' width='108' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='108' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> StationaryPhase</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_5_1_1_1_1_1_1_4' x1='-35' y1='-190' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Column'">
+<g id='_1_1_1_5_1_1_1_1_1_2' class='box' transform='translate(1400,3387)' data-desc-height='28' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='shadow' x='3' y='3' width='189' height='46'/>
+<rect class='boxelement' x='0' y='0' width='189' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Column</text>
+<text class='visible' x='5' y='41'>type: ColumnConfigurationType</text>
+<text x='5' y='59'>1..∞</text>
+<text x='5' y='73' class='desc'>Information should be looked up on</text>
+<text x='5' y='87' class='desc'>the relevant providers website</text>
+<line class='connection' id='p_1_1_1_5_1_1_1_1_1_2' x1='-35' y1='-261' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='188' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_1_1_2' onclick='show("_1_1_1_5_1_1_1_1_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_1_1_2_1' class='box' transform='translate(1634,3387)' data-desc-height='0' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='shadow' x='3' y='3' width='126' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='126' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> DateOfInstallation</text>
+<text class='visible' x='5' y='41'>type: xs:date</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_1_1_1_1_2_2' class='box' transform='translate(1634,3458)' data-desc-height='0' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='shadow' x='3' y='3' width='159' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='159' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> PoreSizeMax</text>
+<text class='visible' x='5' y='41'>type: xs:positiveInteger</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_1_1_1_1_2_3' class='box' transform='translate(1634,3529)' data-desc-height='0' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='shadow' x='3' y='3' width='159' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='159' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> PoreSizeMin</text>
+<text class='visible' x='5' y='41'>type: xs:positiveInteger</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_1_1_1_1_2_4' class='box' transform='translate(1634,3600)' data-desc-height='0' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='shadow' x='3' y='3' width='108' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='108' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> StationaryPhase</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_5_1_1_1_1_1_2_4' x1='-35' y1='-190' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_OvenList'">
+<g id='_1_1_1_5_1_1_1_2' class='box' transform='translate(1037,3671)' data-desc-height='0' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='shadow' x='3' y='3' width='123' height='46'/>
+<rect class='boxelement' x='0' y='0' width='123' height='46'/>
+<text class='strong elementlink' x='5' y='27'>OvenList</text>
+<text class='visible' x='5' y='41'>type: OvenListType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='122' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_2' onclick='show("_1_1_1_5_1_1_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_2_1' class='box' transform='translate(1205,3671)' data-desc-height='0' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle class='empty' cx='42' cy='23' r='2'/>
+<circle class='empty' cx='42' cy='32' r='2'/>
+<polyline points='26,23 34,23 34,14 40,14'/>
+<text x='5' y='52'>1..2</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_2_1' onclick='show("_1_1_1_5_1_1_1_2_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_ColumnOven'">
+<g id='_1_1_1_5_1_1_1_2_1_1' class='box' transform='translate(1310,3671)' data-desc-height='0' data-desc-height-rest='34' data-desc-x='1400'>
+<rect class='shadow' x='3' y='3' width='177' height='46'/>
+<rect class='boxelement' x='0' y='0' width='177' height='46'/>
+<text class='strong elementlink' x='5' y='27'>ColumnOven</text>
+<text class='visible' x='5' y='41'>type: OvenConfigurationType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='176' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_2_1_1' onclick='show("_1_1_1_5_1_1_1_2_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_2_1_1_1' class='box' transform='translate(1532,3671)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='1532'>
+<rect class='shadow' x='3' y='3' width='153' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='153' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Temperature</text>
+<text class='visible' x='5' y='41'>type: PositiveFloatType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in celcius</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_gpcOven'">
+<g id='_1_1_1_5_1_1_1_2_1_2' class='box' transform='translate(1310,3742)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='1532'>
+<rect class='shadow' x='3' y='3' width='177' height='46'/>
+<rect class='boxelement' x='0' y='0' width='177' height='46'/>
+<text class='strong elementlink' x='5' y='27'>gpcOven</text>
+<text class='visible' x='5' y='41'>type: OvenConfigurationType</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_5_1_1_1_2_1_2' x1='-35' y1='-48' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='176' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_2_1_2' onclick='show("_1_1_1_5_1_1_1_2_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_2_1_2_1' class='box' transform='translate(1532,3742)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='1532'>
+<rect class='shadow' x='3' y='3' width='153' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='153' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Temperature</text>
+<text class='visible' x='5' y='41'>type: PositiveFloatType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in celcius</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Pump'">
+<g id='_1_1_1_5_1_1_1_3' class='box' transform='translate(1037,3813)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='1532'>
+<rect class='shadow' x='3' y='3' width='177' height='46'/>
+<rect class='boxelement' x='0' y='0' width='177' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Pump</text>
+<text class='visible' x='5' y='41'>type: PumpConfigurationType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='176' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_3' onclick='show("_1_1_1_5_1_1_1_3")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_3_1' class='box' transform='translate(1259,3813)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='1259'>
+<rect class='shadow' x='3' y='3' width='153' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='153' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> FlowRate</text>
+<text class='visible' x='5' y='41'>type: PositiveFloatType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>must be saved as mL/min</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Injector'">
+<g id='_1_1_1_5_1_1_1_4' class='box' transform='translate(1037,3884)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='1259'>
+<rect class='shadow' x='3' y='3' width='201' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='201' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Injector</text>
+<text class='visible' x='5' y='41'>type: InjectorConfigurationType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='200' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_4' onclick='show("_1_1_1_5_1_1_1_4")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_4_1' class='box' transform='translate(1283,3884)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='1283'>
+<rect class='shadow' x='3' y='3' width='153' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='153' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> InjectionVolume</text>
+<text class='visible' x='5' y='41'>type: PositiveFloatType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in µL</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Eluent'">
+<g id='_1_1_1_5_1_1_1_5' class='box' transform='translate(1037,3955)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='1283'>
+<rect class='shadow' x='3' y='3' width='111' height='46'/>
+<rect class='boxelement' x='0' y='0' width='111' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Eluent</text>
+<text class='visible' x='5' y='41'>type: EluentType</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_5_1_1_1_5' x1='-35' y1='-829' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='110' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_5' onclick='show("_1_1_1_5_1_1_1_5")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_1_1_5_1' class='box' transform='translate(1193,3955)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='1283'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_5_1_1_1_5_1' onclick='show("_1_1_1_5_1_1_1_5_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_SolventName'">
+<g id='_1_1_1_5_1_1_1_5_1_1' class='box' transform='translate(1298,3955)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='1283'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>SolventName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_AdditiveName'">
+<g id='_1_1_1_5_1_1_1_5_1_2' class='box' transform='translate(1298,4026)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='1283'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>AdditiveName</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_RecyclingMode'">
+<g id='_1_1_1_5_1_1_1_5_1_3' class='box' transform='translate(1298,4097)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='1298'>
+<rect class='shadow' x='3' y='3' width='111' height='46'/>
+<rect class='boxelement' x='0' y='0' width='111' height='46'/>
+<text class='strong elementlink' x='5' y='27'>RecyclingMode</text>
+<text class='visible' x='5' y='41'>type: xs:boolean</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>simple boolean value</text>
+<line class='connection' id='p_1_1_1_5_1_1_1_5_1_3' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_RawData'">
+<g id='_1_1_1_5_1_2' class='box' transform='translate(674,4168)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='674'>
+<rect class='shadow' x='3' y='3' width='117' height='46'/>
+<rect class='boxelement' x='0' y='0' width='117' height='46'/>
+<text class='strong elementlink' x='5' y='27'>RawData</text>
+<text class='visible' x='5' y='41'>type: RawDataType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Stored as a base64</text>
+<text x='5' y='87' class='desc'>encoded data</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='116' y='17' xlink:href='#minus' id='s_1_1_1_5_1_2' onclick='show("_1_1_1_5_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_2_1' class='box' transform='translate(836,4168)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='674'>
+<rect class='shadow' x='3' y='3' width='111' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='111' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Compression</text>
+<text class='visible' x='5' y='41'>type: xs:boolean</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_integrationValues'">
+<g id='_1_1_1_5_1_3' class='box' transform='translate(674,4239)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='674'>
+<rect class='shadow' x='3' y='3' width='201' height='46'/>
+<rect class='boxelement' x='0' y='0' width='201' height='46'/>
+<text class='strong elementlink' x='5' y='27'>integrationValues</text>
+<text class='visible' x='5' y='41'>type: integrationValuesListType</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_5_1_3' x1='-35' y1='-1113' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='200' y='17' xlink:href='#minus' id='s_1_1_1_5_1_3' onclick='show("_1_1_1_5_1_3")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_3_1' class='box' transform='translate(920,4239)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='674'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_5_1_3_1' onclick='show("_1_1_1_5_1_3_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Baseline'">
+<g id='_1_1_1_5_1_3_1_1' class='box' transform='translate(1025,4239)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='674'>
+<rect class='shadow' x='3' y='3' width='177' height='46'/>
+<rect class='boxelement' x='0' y='0' width='177' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Baseline</text>
+<text class='visible' x='5' y='41'>type: integrationValuesType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='176' y='17' xlink:href='#minus' id='s_1_1_1_5_1_3_1_1' onclick='show("_1_1_1_5_1_3_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_3_1_1_1' class='box' transform='translate(1247,4239)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='99' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='99' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> EndVolume</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in</text>
+<text x='5' y='87' class='desc'>mL</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_3_1_1_2' class='box' transform='translate(1247,4310)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='99' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='99' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> StartVolume</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in</text>
+<text x='5' y='87' class='desc'>mL</text>
+<line class='connection' id='p_1_1_1_5_1_3_1_1_2' x1='-35' y1='-48' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Peaks'">
+<g id='_1_1_1_5_1_3_1_2' class='box' transform='translate(1025,4381)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='177' height='46'/>
+<rect class='boxelement' x='0' y='0' width='177' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Peaks</text>
+<text class='visible' x='5' y='41'>type: integrationValuesType</text>
+<text x='5' y='59'>1..∞</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='176' y='17' xlink:href='#minus' id='s_1_1_1_5_1_3_1_2' onclick='show("_1_1_1_5_1_3_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_3_1_2_1' class='box' transform='translate(1247,4381)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='99' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='99' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> EndVolume</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in</text>
+<text x='5' y='87' class='desc'>mL</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_3_1_2_2' class='box' transform='translate(1247,4452)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='99' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='99' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> StartVolume</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in</text>
+<text x='5' y='87' class='desc'>mL</text>
+<line class='connection' id='p_1_1_1_5_1_3_1_2_2' x1='-35' y1='-48' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_Solvent'">
+<g id='_1_1_1_5_1_3_1_3' class='box' transform='translate(1025,4523)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='177' height='46'/>
+<rect class='boxelement' x='0' y='0' width='177' height='46'/>
+<text class='strong elementlink' x='5' y='27'>Solvent</text>
+<text class='visible' x='5' y='41'>type: integrationValuesType</text>
+<text x='5' y='59'>1..∞</text>
+<line class='connection' id='p_1_1_1_5_1_3_1_3' x1='-35' y1='-261' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='176' y='17' xlink:href='#minus' id='s_1_1_1_5_1_3_1_3' onclick='show("_1_1_1_5_1_3_1_3")'/>
+</g>
+
+</a>
+<g id='_1_1_1_5_1_3_1_3_1' class='box' transform='translate(1247,4523)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='99' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='99' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> EndVolume</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in</text>
+<text x='5' y='87' class='desc'>mL</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_5_1_3_1_3_2' class='box' transform='translate(1247,4594)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='99' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='99' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> StartVolume</text>
+<text class='visible' x='5' y='41'>type: xs:float</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Must be saved in</text>
+<text x='5' y='87' class='desc'>mL</text>
+<line class='connection' id='p_1_1_1_5_1_3_1_3_2' x1='-35' y1='-48' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_CalibrationData'">
+<g id='_1_1_1_6' class='box' transform='translate(383,4665)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='shadow' x='3' y='3' width='165' height='46'/>
+<rect class='boxelement' x='0' y='0' width='165' height='46'/>
+<text class='strong elementlink' x='5' y='27'>CalibrationData</text>
+<text class='visible' x='5' y='41'>type: CalibrationDataType</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_6' x1='-35' y1='-4592' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='164' y='17' xlink:href='#minus' id='s_1_1_1_6' onclick='show("_1_1_1_6")'/>
+</g>
+
+</a>
+<g id='_1_1_1_6_1' class='box' transform='translate(593,4665)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='1247'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_6_1' onclick='show("_1_1_1_6_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_TypeOfFit'">
+<g id='_1_1_1_6_1_1' class='box' transform='translate(698,4665)' data-desc-height='56' data-desc-height-rest='56' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='135' height='46'/>
+<rect class='boxelement' x='0' y='0' width='135' height='46'/>
+<text class='strong elementlink' x='5' y='27'>TypeOfFit</text>
+<text class='visible' x='5' y='41'>type: DegreePolyType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Stores the degree of</text>
+<text x='5' y='87' class='desc'>polynomial. used to</text>
+<text x='5' y='101' class='desc'>affirm the correct number</text>
+<text x='5' y='115' class='desc'>of coeffs are added.</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_CoeffList'">
+<g id='_1_1_1_6_1_2' class='box' transform='translate(698,4736)' data-desc-height='28' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='129' height='46'/>
+<rect class='boxelement' x='0' y='0' width='129' height='46'/>
+<text class='strong elementlink' x='5' y='27'>CoeffList</text>
+<text class='visible' x='5' y='41'>type: CoeffListType</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>Stores the coefficients</text>
+<text x='5' y='87' class='desc'>for calibration curves</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='128' y='17' xlink:href='#minus' id='s_1_1_1_6_1_2' onclick='show("_1_1_1_6_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_6_1_2_1' class='box' transform='translate(872,4736)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_6_1_2_1' onclick='show("_1_1_1_6_1_2_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_QuinticCoeff'">
+<g id='_1_1_1_6_1_2_1_1' class='box' transform='translate(977,4736)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>QuinticCoeff</text>
+<text class='visible' x='5' y='41'>type: CoeffType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_QuarticCoeff'">
+<g id='_1_1_1_6_1_2_1_2' class='box' transform='translate(977,4807)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>QuarticCoeff</text>
+<text class='visible' x='5' y='41'>type: CoeffType</text>
+<text x='5' y='59'>0..1</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_CubicCoeff'">
+<g id='_1_1_1_6_1_2_1_3' class='box' transform='translate(977,4878)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>CubicCoeff</text>
+<text class='visible' x='5' y='41'>type: CoeffType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_QuadraticCoeff'">
+<g id='_1_1_1_6_1_2_1_4' class='box' transform='translate(977,4949)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>QuadraticCoeff</text>
+<text class='visible' x='5' y='41'>type: CoeffType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_LinearCoeff'">
+<g id='_1_1_1_6_1_2_1_5' class='box' transform='translate(977,5020)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>LinearCoeff</text>
+<text class='visible' x='5' y='41'>type: CoeffType</text>
+<text x='5' y='59'></text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_constant'">
+<g id='_1_1_1_6_1_2_1_6' class='box' transform='translate(977,5091)' data-desc-height='0' data-desc-height-rest='28' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='105' height='46'/>
+<rect class='boxelement' x='0' y='0' width='105' height='46'/>
+<text class='strong elementlink' x='5' y='27'>constant</text>
+<text class='visible' x='5' y='41'>type: CoeffType</text>
+<text x='5' y='59'></text>
+<line class='connection' id='p_1_1_1_6_1_2_1_6' x1='-35' y1='-332' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+</a>
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_MHKS_List'">
+<g id='_1_1_1_6_1_3' class='box' transform='translate(698,5162)' data-desc-height='84' data-desc-height-rest='84' data-desc-x='698'>
+<rect class='shadow' x='3' y='3' width='123' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='123' height='46'/>
+<text class='strong elementlink' x='5' y='27'>MHKS_List</text>
+<text class='visible' x='5' y='41'>type: MHKSListType</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Contains Mark-Houwink</text>
+<text x='5' y='87' class='desc'>constant and exponent</text>
+<text x='5' y='101' class='desc'>used in universal</text>
+<text x='5' y='115' class='desc'>calibration equation,</text>
+<text x='5' y='129' class='desc'>only need to be stored</text>
+<text x='5' y='143' class='desc'>if known.</text>
+<line class='connection' id='p_1_1_1_6_1_3' x1='-35' y1='-474' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='122' y='17' xlink:href='#minus' id='s_1_1_1_6_1_3' onclick='show("_1_1_1_6_1_3")'/>
+</g>
+
+</a>
+<g id='_1_1_1_6_1_3_1' class='box' transform='translate(866,5162)' data-desc-height='0' data-desc-height-rest='84' data-desc-x='698'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_6_1_3_1' onclick='show("_1_1_1_6_1_3_1")'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_K'">
+<g id='_1_1_1_6_1_3_1_1' class='box' transform='translate(971,5162)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='shadow' x='3' y='3' width='93' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='93' height='46'/>
+<text class='strong elementlink' x='5' y='27'>K</text>
+<text class='visible' x='5' y='41'>type: anyType</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>Constant K</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='92' y='17' xlink:href='#minus' id='s_1_1_1_6_1_3_1_1' onclick='show("_1_1_1_6_1_3_1_1")'/>
+</g>
+
+</a>
+<g id='_1_1_1_6_1_3_1_1_1' class='box' transform='translate(1109,5162)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_6_1_3_1_1_1' onclick='show("_1_1_1_6_1_3_1_1_1")'/>
+</g>
+
+<g id='_1_1_1_6_1_3_1_1_1_1' class='box' transform='translate(1214,5162)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='shadow' x='3' y='3' width='60' height='46'/>
+<rect class='boxany' x='0' y='0' width='60' height='46'/>
+<rect class='lax' x='6' y='34' width='6' height='6'/>
+<rect class='lax' x='16' y='34' width='6' height='6'/>
+<rect class='lax' x='26' y='34' width='6' height='6'/>
+<text x='5' y='13'>any NS</text>
+<text class='strong' x='5' y='27'>&lt;&gt;</text>
+<text x='5' y='59'>0..∞</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_6_1_3_1_1_2' class='box' transform='translate(1109,5233)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='shadow' x='3' y='3' width='60' height='46' rx='9'/>
+<rect class='boxanyattribute' x='0' y='0' width='60' height='46' rx='9'/>
+<rect class='lax' x='6' y='34' width='6' height='6'/>
+<rect class='lax' x='16' y='34' width='6' height='6'/>
+<rect class='lax' x='26' y='34' width='6' height='6'/>
+<text x='5' y='13'>any NS</text>
+<text class='strong' x='5' y='27'>@</text>
+<line class='connection' id='p_1_1_1_6_1_3_1_1_2' x1='-35' y1='-48' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<a href="#" onclick="window.parent.location.href = window.parent.location.href.split('#')[0]  + '#element_a'">
+<g id='_1_1_1_6_1_3_1_2' class='box' transform='translate(971,5304)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='shadow' x='3' y='3' width='93' height='46'/>
+<rect class='boxelementoptional' x='0' y='0' width='93' height='46'/>
+<text class='strong elementlink' x='5' y='27'>a</text>
+<text class='visible' x='5' y='41'>type: anyType</text>
+<text x='5' y='59'>0..1</text>
+<text x='5' y='73' class='desc'>exponent a</text>
+<line class='connection' id='p_1_1_1_6_1_3_1_2' x1='-35' y1='-119' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+<use x='92' y='17' xlink:href='#minus' id='s_1_1_1_6_1_3_1_2' onclick='show("_1_1_1_6_1_3_1_2")'/>
+</g>
+
+</a>
+<g id='_1_1_1_6_1_3_1_2_1' class='box' transform='translate(1109,5304)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/>
+<circle cx='42' cy='14' r='2'/>
+<circle cx='42' cy='23' r='2'/>
+<circle cx='42' cy='32' r='2'/>
+<text class='small' x='30' y='17'>1</text>
+<text class='small' x='30' y='26'>2</text>
+<text class='small' x='30' y='35'>3</text>
+<line x1='42' y1='14' x2='42' y2='32'/>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+<use x='59' y='17' xlink:href='#minus' id='s_1_1_1_6_1_3_1_2_1' onclick='show("_1_1_1_6_1_3_1_2_1")'/>
+</g>
+
+<g id='_1_1_1_6_1_3_1_2_1_1' class='box' transform='translate(1214,5304)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='shadow' x='3' y='3' width='60' height='46'/>
+<rect class='boxany' x='0' y='0' width='60' height='46'/>
+<rect class='lax' x='6' y='34' width='6' height='6'/>
+<rect class='lax' x='16' y='34' width='6' height='6'/>
+<rect class='lax' x='26' y='34' width='6' height='6'/>
+<text x='5' y='13'>any NS</text>
+<text class='strong' x='5' y='27'>&lt;&gt;</text>
+<text x='5' y='59'>0..∞</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_1_6_1_3_1_2_2' class='box' transform='translate(1109,5375)' data-desc-height='0' data-desc-height-rest='14' data-desc-x='971'>
+<rect class='shadow' x='3' y='3' width='60' height='46' rx='9'/>
+<rect class='boxanyattribute' x='0' y='0' width='60' height='46' rx='9'/>
+<rect class='lax' x='6' y='34' width='6' height='6'/>
+<rect class='lax' x='16' y='34' width='6' height='6'/>
+<rect class='lax' x='26' y='34' width='6' height='6'/>
+<text x='5' y='13'>any NS</text>
+<text class='strong' x='5' y='27'>@</text>
+<line class='connection' id='p_1_1_1_6_1_3_1_2_2' x1='-35' y1='-48' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+<g id='_1_1_2' class='box' transform='translate(278,5446)' data-desc-height='14' data-desc-height-rest='14' data-desc-x='278'>
+<rect class='shadow' x='3' y='3' width='105' height='46' rx='9'/>
+<rect class='boxattribute1' x='0' y='0' width='105' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> Version</text>
+<text class='visible' x='5' y='41'>type: xs:string</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>gpcML version used.</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+<g id='_1_1_3' class='box' transform='translate(278,5517)' data-desc-height='42' data-desc-height-rest='42' data-desc-x='278'>
+<rect class='shadow' x='3' y='3' width='93' height='46' rx='9'/>
+<rect class='boxattribute2' x='0' y='0' width='93' height='46' rx='9'
+/>
+<text class='strong' x='5' y='27'><tspan class='big'>@</tspan> id</text>
+<text class='visible' x='5' y='41'>type: xs:int</text>
+<text x='5' y='59'></text>
+<text x='5' y='73' class='desc'>id associated</text>
+<text x='5' y='87' class='desc'>with the gpcML</text>
+<text x='5' y='101' class='desc'>document</text>
+<line class='connection' id='p_1_1_3' x1='-35' y1='-5444' x2='-35' y2='-40'/>
+<path class='connection' d='M-35,-40 Q-35,15 0,23'/>
+</g>
+
+</svg>
