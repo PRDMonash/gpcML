@@ -40,7 +40,9 @@ print(data)
 ```
 Here, root is an ElementTree object that then has multiple methods which can be used to extract various pieces of information, the docs can be viewed [here](https://docs.python.org/3/library/xml.etree.elementtree.html). Then, the find() method is used to access a specific location in the object in a similar fashion to a file explorer. Finally, the text from the "RawData" element is called with **raw_data.text** which then can be decoded back from base64 into it's original text.
 ### Validation
-Validation can be done either online or locally. Validation works by ensuring the structure of the created xml document meets the specification outlined in the xsd, which also asserts whether the data type of the stored values match those outlined in the xsd.
+Validation can be done either online or locally. 
+
+Validation works by ensuring the structure of the created xml document meets the specification outlined in the xsd, which also asserts whether the data type of the stored values match those outlined in the xsd.
 
 **Online**
 1. Visit the website [gpcml.com](gpcml.com)
